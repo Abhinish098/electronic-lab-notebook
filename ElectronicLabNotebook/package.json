@@ -3,18 +3,20 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "AI-powered Electronic Lab Notebook — FastAPI backend ready",
   "homepage": "https://Abhinish098.github.io/electronic-lab-notebook",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "recharts": "^2.10.3"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
@@ -25,6 +27,7 @@
     "@vitejs/plugin-react": "^6.0.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "gh-pages": "^6.3.0",

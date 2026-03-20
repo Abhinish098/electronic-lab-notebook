@@ -1,121 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+/**
+ * App.jsx
+ * Application root.
+ * Responsibilities:
+ *   1. Wraps everything in <AppProvider> (global window-manager state)
+ *   2. Renders the <Desktop> background layer
+ *   3. Maps open windows → <WindowFrame> instances (skips minimised ones)
+ *   4. Renders the <Taskbar>
+ *
+ * To add a new module:
+ *   1. Create your component in /src/modules/<name>/
+ *   2. Register it in /src/configs/windowRegistry.js
+ *   That's all — App.jsx needs no changes.
+ */
 
-function App() {
-  const [count, setCount] = useState(0)
+import { AppProvider, useApp } from '@/context/AppContext';
+import { WINDOW_REGISTRY }     from '@/configs/windowRegistry';
+import WindowFrame             from '@/components/WindowFrame';
+import Desktop                 from '@/layout/Desktop';
+import Taskbar                 from '@/layout/Taskbar';
+
+/* ── Inner shell (consumes context) ────────────────────────────────────────── */
+const Shell = () => {
+  const {
+    openWindows, minimizedWindows, activeWindow,
+    openWindow, closeWindow, minimizeWindow, focusWindow,
+  } = useApp();
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
 
-      <div className="ticks"></div>
+      {/* Layer 1 — Desktop (background) */}
+      <Desktop openWindows={openWindows} onOpen={openWindow} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Layer 2 — Open windows */}
+      {[...openWindows].map(id => {
+        if (minimizedWindows.has(id)) return null;       // hidden, not unmounted
+        const cfg = WINDOW_REGISTRY[id];
+        if (!cfg) return null;
+        const Module = cfg.component;
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+        return (
+          <WindowFrame
+            key={id}
+            title={cfg.title}
+            icon={cfg.icon}
+            defaultPos={cfg.defaultPos}
+            defaultSize={cfg.defaultSize}
+            isActive={activeWindow === id}
+            onClose={()    => closeWindow(id)}
+            onMinimize={()  => minimizeWindow(id)}
+            onFocus={()    => focusWindow(id)}
+          >
+            <Module />
+          </WindowFrame>
+        );
+      })}
 
-export default App
+      {/* Layer 3 — Taskbar (always on top) */}
+      <Taskbar
+        openWindows={openWindows}
+        activeWindow={activeWindow}
+        minimizedWindows={minimizedWindows}
+        onOpen={openWindow}
+        onFocus={focusWindow}
+        onMinimize={minimizeWindow}
+      />
+
+    </div>
+  );
+};
+
+/* ── Root export ────────────────────────────────────────────────────────────── */
+const App = () => (
+  <AppProvider>
+    <Shell />
+  </AppProvider>
+);
+
+export default App;

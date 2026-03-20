@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─── Reset & Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: #07070f;
+  color: #e2e2f0;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+}
+
+/* ─── Scrollbars ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 4px; height: 4px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: rgba(124,106,247,0.30); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover  { background: rgba(124,106,247,0.60); }
+
+/* Allow text selection inside inputs / editors */
+input, textarea, [contenteditable] { user-select: text; }
+
+/* ─── Keyframe Animations ──────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes progressBar {
+  0%   { width:   0%; }
+  80%  { width:  90%; }
+  100% { width: 100%; }
+}
+
+/* ─── Animation Utility Classes ────────────────────────────────────────────── */
+.eln-window { animation: fadeInUp 0.22s ease forwards; }
+.eln-pulse  { animation: pulse 1.6s ease-in-out infinite; }
+
+/* ─── Buttons ──────────────────────────────────────────────────────────────── */
+.eln-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(124,106,247,0.28);
+  background: rgba(124,106,247,0.10);
+  color: #d0c8ff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.eln-btn:hover:not(:disabled) {
+  background: rgba(124,106,247,0.25);
+  border-color: rgba(124,106,247,0.50);
+}
+.eln-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.eln-btn-solid {
+  background: rgba(124,106,247,0.75);
+  border-color: #7c6af7;
+  color: #fff;
+  font-weight: 600;
+}
+.eln-btn-solid:hover:not(:disabled) { background: #7c6af7; }
+
+.eln-btn-teal {
+  border-color: rgba(78,205,196,0.35);
+  background: rgba(78,205,196,0.10);
+  color: #6fede8;
+}
+.eln-btn-teal:hover:not(:disabled) { background: rgba(78,205,196,0.22); }
+
+.eln-btn-gold {
+  border-color: rgba(247,198,106,0.35);
+  background: rgba(247,198,106,0.10);
+  color: #f7c66a;
+}
+.eln-btn-gold:hover:not(:disabled) { background: rgba(247,198,106,0.22); }
+
+/* ─── Form Inputs ──────────────────────────────────────────────────────────── */
+.eln-input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(120,100,255,0.18);
+  border-radius: 8px;
+  color: #e2e2f0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  padding: 7px 12px;
+  outline: none;
+  transition: border-color 0.18s;
+}
+.eln-input:focus       { border-color: rgba(124,106,247,0.55); }
+.eln-input::placeholder { color: #404068; }
+
+/* ─── Sidebar Navigation ───────────────────────────────────────────────────── */
+.eln-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-size: 12px;
+  color: #8080b0;
+}
+.eln-sidebar-item:hover        { background: rgba(124,106,247,0.10); color: #c0b8ff; }
+.eln-sidebar-item.active       { background: rgba(124,106,247,0.18); color: #a590ff; font-weight: 600; }
+
+/* ─── Tabs ─────────────────────────────────────────────────────────────────── */
+.eln-tab {
+  padding: 5px 13px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.18s;
+  border: 1px solid transparent;
+  border-bottom: none;
+  white-space: nowrap;
+}
+.eln-tab.active            { background: rgba(124,106,247,0.18); border-color: rgba(124,106,247,0.28); color: #a590ff; }
+.eln-tab:not(.active)      { color: #5050a0; }
+.eln-tab:not(.active):hover { background: rgba(255,255,255,0.04); color: #c0b8ff; }
+
+/* ─── Data Tables ──────────────────────────────────────────────────────────── */
+table.eln-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.eln-table th {
+  background: rgba(124,106,247,0.12);
+  color: #a590ff;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(124,106,247,0.18);
+}
+table.eln-table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: #c0c0e0;
+}
+table.eln-table tbody tr:hover td { background: rgba(255,255,255,0.025); }
+
+/* ─── Taskbar Icon ─────────────────────────────────────────────────────────── */
+.taskbar-icon-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  position: relative;
+}
+.taskbar-icon-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  border: 1px solid transparent;
+  font-size: 22px;
+}
+.taskbar-icon-btn:hover {
+  background: rgba(124,106,247,0.20) !important;
+  border-color: rgba(124,106,247,0.30) !important;
+  transform: translateY(-2px);
+}
+
+/* ─── Desktop Icon ─────────────────────────────────────────────────────────── */
+.desk-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  padding: 12px 8px;
+  border-radius: 14px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  width: 88px;
+}
+.desk-icon:hover  { background: rgba(124,106,247,0.10); border-color: rgba(124,106,247,0.20); transform: scale(1.04); }
+.desk-icon:active { transform: scale(0.97); }
