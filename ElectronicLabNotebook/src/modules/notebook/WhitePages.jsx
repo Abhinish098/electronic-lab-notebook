@@ -1,149 +1,144 @@
 /**
- * WhitePages.jsx
- * Multi-page rich-text editor with a collapsible page list sidebar.
- * Uses the browser's native execCommand API for formatting.
- * Replace with a library (TipTap, Quill, Slate) for production.
+ * WhitePages.jsx  —  Orchestrator (lean composition layer)
+ *
+ * This file owns NO business logic itself.
+ * It wires together:
+ *   usePageManager  →  page list, content cache, API calls
+ *   useAutocomplete →  debounced AI suggestion
+ *   PageSidebar     →  page list + add/delete buttons
+ *   SidebarToolSection + TextToTableTool + TextToImageTool  →  bottom tools
+ *   EditorToolbar   →  title input + format buttons
+ *   EditorArea      →  contentEditable writing surface
+ *   AutocompleteBar →  ghost suggestion pill
+ *   StatusBar       →  bottom metadata strip
+ *
+ * Layout:
+ * ┌──────────────────────┬──────────────────────────────────┐
+ * │  PageSidebar         │  EditorToolbar                   │
+ * │   Buffer Opt…        │                                  │
+ * │   Cell Viability…    │  EditorArea (contentEditable)    │
+ * │   Crystallisation…   │                                  │
+ * │   ─── (flex gap) ─── │  AutocompleteBar (ghost pill)    │
+ * │  TextToTableTool ▲   │  StatusBar                       │
+ * │  TextToImageTool ▲   │                                  │
+ * └──────────────────────┴──────────────────────────────────┘
  */
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
-const INITIAL_PAGES = [
-  {
-    id: 1,
-    title: 'Buffer Optimisation Study',
-    created: 'Jan 15, 2025',
-    content: '<h3>Objective</h3><p>Determine the optimal buffer conditions for enzyme assay at varying pH levels (6.0 – 8.5).</p><h3>Materials</h3><p>PBS buffer, Tris-HCl, sodium acetate, enzyme stock solution (2 mg/mL).</p><h3>Observations</h3><p>Maximum activity observed at pH 7.4 with Tris-HCl buffer. Significant reduction in activity below pH 6.5.</p>',
-  },
-  {
-    id: 2,
-    title: 'Cell Viability Assay',
-    created: 'Jan 18, 2025',
-    content: '<h3>Procedure</h3><p>MTT assay performed on HeLa cells at passage 12. Cells seeded at 1×10⁴ per well in 96-well plate.</p>',
-  },
-  {
-    id: 3,
-    title: 'Crystallisation Protocol',
-    created: 'Jan 22, 2025',
-    content: '<h3>Hanging Drop Setup</h3><p>Reservoir solution: 20% PEG 4000, 0.1 M HEPES pH 7.5, 0.2 M MgCl₂.</p>',
-  },
-];
+import usePageManager   from './hooks/usePageManager';
+import { MOCK_NOTEBOOK_ID } from './services/notebookService';
+import useAutocomplete  from './hooks/useAutocomplete';
+
+import PageSidebar        from './components/PageSidebar';
+import SidebarToolSection from './components/SidebarToolSection';
+import TextToTableTool    from './components/TextToTableTool';
+import TextToImageTool    from './components/TextToImageTool';
+import EditorToolbar      from './components/EditorToolbar';
+import EditorArea         from './components/EditorArea';
+import AutocompleteBar    from './components/AutocompleteBar';
+import StatusBar          from './components/StatusBar';
 
 const WhitePages = () => {
-  const [pages,      setPages]      = useState(INITIAL_PAGES);
-  const [activePage, setActivePage] = useState(INITIAL_PAGES[0].id);
-  const editorRef = useRef(null);
+  // ── Core state (pages + content cache + API) ─────────────────────────────
+  const {
+    pages, activePage, currentMeta, loading,
+    editorRef,
+    switchPage, addPage, deletePage, updateTitle, flushContent,
+  } = usePageManager();
 
-  const current = pages.find(p => p.id === activePage);
+  // ── AI autocomplete (silent background feature) ───────────────────────────
+  const {
+    suggestion, isLoading: acLoading,
+    handleInput, handleKeyDown, dismiss,
+  } = useAutocomplete(editorRef, flushContent);
 
-  /* ── Page CRUD ── */
-  const addPage = () => {
-    const id = Date.now();
-    const newPage = {
-      id,
-      title: `New Experiment #${pages.length + 1}`,
-      created: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      content: '<p>Start writing…</p>',
-    };
-    setPages(prev => [...prev, newPage]);
-    setActivePage(id);
-  };
+  // ── Sidebar tool accordion state ──────────────────────────────────────────
+  const [tableOpen, setTableOpen] = useState(false);
+  const [imageOpen, setImageOpen] = useState(false);
 
-  const deletePage = (id) => {
-    setPages(prev => prev.filter(p => p.id !== id));
-    if (activePage === id) {
-      setActivePage(pages.find(p => p.id !== id)?.id ?? null);
-    }
-  };
+  // ─── Loading screen ───────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, color: '#5050a0' }}>
+        <span className="eln-pulse" style={{ fontSize: 18 }}>📓</span>
+        <span style={{ fontSize: 13 }}>Loading notebook…</span>
+      </div>
+    );
+  }
 
-  const updateTitle   = (id, title)   => setPages(prev => prev.map(p => p.id === id ? { ...p, title }   : p));
-  const updateContent = ()            => {
-    if (editorRef.current) {
-      const html = editorRef.current.innerHTML;
-      setPages(prev => prev.map(p => p.id === activePage ? { ...p, content: html } : p));
-    }
-  };
-
-  /* ── Rich text commands ── */
-  const execCmd = (cmd, value) => {
-    document.execCommand(cmd, false, value ?? null);
-    editorRef.current?.focus();
-  };
-
+  // ─── Main layout ──────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      {/* ── Page List Sidebar ── */}
-      <div style={{ width: 190, borderRight: '1px solid rgba(100,80,200,0.1)', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(100,80,200,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 10, color: '#6060a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Pages</span>
-          <button className="eln-btn" style={{ padding: '2px 8px', fontSize: 11 }} onClick={addPage}>+ New</button>
-        </div>
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
-          {pages.map(page => (
-            <div
-              key={page.id}
-              className={`eln-sidebar-item ${activePage === page.id ? 'active' : ''}`}
-              onClick={() => setActivePage(page.id)}
-              style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2, marginBottom: 2, position: 'relative' }}
-            >
-              <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', paddingRight: 18 }}>
-                {page.title}
-              </div>
-              <div style={{ fontSize: 10, color: '#404065' }}>{page.created}</div>
+      {/* ════════════ SIDEBAR ════════════ */}
+      <div style={{
+        width: 210,
+        borderRight: '1px solid rgba(100,80,200,0.10)',
+        display: 'flex',
+        flexDirection: 'column',
+        flexShrink: 0,
+        overflow: 'hidden',
+      }}>
+        {/* Pages list (scrollable, fills remaining vertical space) */}
+        <PageSidebar
+          pages={pages}
+          activePage={activePage}
+          notebookId={MOCK_NOTEBOOK_ID}
+          onSwitch={switchPage}
+          onAdd={addPage}
+          onDelete={deletePage}
+        />
 
-              {activePage === page.id && pages.length > 1 && (
-                <button
-                  onClick={e => { e.stopPropagation(); deletePage(page.id); }}
-                  style={{ position: 'absolute', right: 6, top: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: '#f76a6a', fontSize: 13, lineHeight: 1 }}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* ── Bottom tools, pinned ── */}
+        <SidebarToolSection
+          icon="📊" label="Text → Table"
+          expanded={tableOpen}
+          onToggle={() => setTableOpen(v => !v)}
+        >
+          <TextToTableTool editorRef={editorRef} onInsert={flushContent} />
+        </SidebarToolSection>
+
+        <SidebarToolSection
+          icon="🎨" label="Text → Image"
+          expanded={imageOpen}
+          onToggle={() => setImageOpen(v => !v)}
+        >
+          <TextToImageTool editorRef={editorRef} onInsert={flushContent} />
+        </SidebarToolSection>
       </div>
 
-      {/* ── Editor Area ── */}
-      {current && (
+      {/* ════════════ EDITOR COLUMN ════════════ */}
+      {currentMeta ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          {/* Toolbar */}
-          <div style={{ padding: '6px 14px', borderBottom: '1px solid rgba(100,80,200,0.1)', display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input
-              style={{ flex: 1, minWidth: 120, background: 'transparent', border: 'none', color: '#a590ff', fontSize: 14, fontWeight: 700, outline: 'none', fontFamily: 'Outfit, sans-serif' }}
-              value={current.title}
-              onChange={e => updateTitle(current.id, e.target.value)}
-            />
-            <div style={{ display: 'flex', gap: 3 }}>
-              <button className="eln-btn" style={{ padding: '2px 7px', fontWeight: 700 }}         onClick={() => execCmd('bold')}>B</button>
-              <button className="eln-btn" style={{ padding: '2px 7px', fontStyle: 'italic' }}      onClick={() => execCmd('italic')}>I</button>
-              <button className="eln-btn" style={{ padding: '2px 7px', textDecoration: 'underline' }} onClick={() => execCmd('underline')}>U</button>
-              <button className="eln-btn" style={{ padding: '2px 8px', fontSize: 11 }}             onClick={() => execCmd('formatBlock', 'h3')}>H3</button>
-              <button className="eln-btn" style={{ padding: '2px 8px', fontSize: 11 }}             onClick={() => execCmd('insertUnorderedList')}>• List</button>
-              <button className="eln-btn" style={{ padding: '2px 8px', fontSize: 11 }}             onClick={() => execCmd('insertHorizontalRule')}>── HR</button>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
-            <div
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={updateContent}
-              dangerouslySetInnerHTML={{ __html: current.content }}
-              style={{ outline: 'none', color: '#d0d0ea', lineHeight: 1.85, fontSize: 14, minHeight: '100%', fontFamily: 'Outfit, sans-serif' }}
-            />
-          </div>
-
-          {/* Status Bar */}
-          <div style={{ padding: '4px 14px', borderTop: '1px solid rgba(100,80,200,0.08)', display: 'flex', gap: 16, fontSize: 10, color: '#404065' }}>
-            <span>📄 {current.created}</span>
-            <span>🔗 Mock API ready</span>
-            <span style={{ marginLeft: 'auto' }}>Rich Text Editor · ELN v1.0</span>
-          </div>
+          <EditorToolbar
+            title={currentMeta.title}
+            pageId={currentMeta.id}
+            onTitleChange={updateTitle}
+            editorRef={editorRef}
+          />
+          <EditorArea
+            editorRef={editorRef}
+            onInput={handleInput}
+            onKeyDown={handleKeyDown}
+            onBlur={flushContent}
+          />
+          <AutocompleteBar
+            suggestion={suggestion}
+            isLoading={acLoading}
+            onDismiss={dismiss}
+          />
+          <StatusBar
+            createdAt={currentMeta.created_at}
+            hasSuggestion={!!suggestion}
+          />
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#404060', fontSize: 13 }}>
+          No pages yet — click <strong style={{ color: '#7c6af7', margin: '0 4px' }}>+ New</strong> to create one.
         </div>
       )}
+
     </div>
   );
 };
