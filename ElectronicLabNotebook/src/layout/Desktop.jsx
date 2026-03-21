@@ -91,7 +91,7 @@ const Desktop = ({ openWindows, onOpen }) => {
         </div>
       </div>
 
-      {/* ── Desktop Icons ── */}
+      {/* ── Desktop Icons ──
       <div style={{ position: 'absolute', top: 56, right: 32, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {DESKTOP_APPS.map(app => (
           <div
@@ -119,7 +119,7 @@ const Desktop = ({ openWindows, onOpen }) => {
             </span>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* ── Get-started hint ── */}
       {openWindows.size === 0 && (
