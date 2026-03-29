@@ -4,11 +4,11 @@
  * Swap mockTextToImage() for a real POST to ENDPOINTS.TEXT_TO_IMAGE.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SectionHeader from '@/components/SectionHeader';
 import LoadingBar    from '@/components/LoadingBar';
 import ApiNote       from '@/components/ApiNote';
-import { mockTextToImage } from '@/services/mockServices';
+import { mockTextToImage, fetchImageHistory } from '@/services/mockServices';
 import { ENDPOINTS } from '@/api/endpoints';
 
 const TextToImageAgent = () => {
@@ -17,14 +17,34 @@ const TextToImageAgent = () => {
   const [loading,  setLoading]  = useState(false);
   const [selected, setSelected] = useState(null);
 
+  useEffect(() => {
+    fetchImageHistory()
+      .then(setImages)
+      .catch(err => console.error('Failed to load image history:', err));
+  }, []);
+
   const generate = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
-    const url   = await mockTextToImage(prompt);
-    const entry = { url, prompt, id: Date.now(), ts: new Date().toLocaleTimeString() };
-    setImages(prev => [entry, ...prev]);
-    setLoading(false);
-    setPrompt('');
+    try {
+      const result = await mockTextToImage(prompt);
+      console.log('result from mockTextToImage:', result);  // ← add this
+      console.log('result.b64 type:', typeof result.b64);   // ← and this
+      const entry = {
+        url:       result.b64,        // ← extract b64 string, not the whole object
+        dbId:      result.id,
+        modelUsed: result.modelUsed,
+        prompt,
+        id:        Date.now(),
+        ts:        new Date().toLocaleTimeString(),
+      };
+      setImages(prev => [entry, ...prev]);
+      setPrompt('');
+    } catch (err) {
+      console.error('Image generation error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,7 +96,12 @@ const TextToImageAgent = () => {
               transform: selected?.id === img.id ? 'scale(1.02)' : 'scale(1)',
             }}
           >
-            <img src={img.url} alt={img.prompt} style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }} />
+            <img
+              key={img.dbId}
+              src={img.url}
+              alt={img.prompt}
+              style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }}
+            />
             <div style={{ padding: '7px 10px' }}>
               <div style={{ fontSize: 11, color: '#7060a0', lineHeight: 1.4 }}>
                 {img.prompt.slice(0, 60)}{img.prompt.length > 60 ? '…' : ''}

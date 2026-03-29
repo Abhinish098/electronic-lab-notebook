@@ -18,7 +18,7 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://<YOUR_GITHUB_USERNAME>.github.io",
+    "https://Abhinish098.github.io",
 ]
 
 app.add_middleware(

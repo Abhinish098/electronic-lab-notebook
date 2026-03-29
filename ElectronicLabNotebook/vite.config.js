@@ -15,7 +15,7 @@ export default defineConfig({
     proxy: {
       // Proxy all /api/* requests to your FastAPI backend
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://electronic-lab-notebook.onrender.com',
         changeOrigin: true,
       },
     },

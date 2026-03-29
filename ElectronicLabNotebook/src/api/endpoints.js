@@ -32,7 +32,8 @@ export const ENDPOINTS = {
 
   // ── AI Agents ─────────────────────────────────────────────────────────────
   AUTOCOMPLETE:        `${BASE_URL}/api/agents/autocomplete`,
-  TEXT_TO_IMAGE:       `${BASE_URL}/api/agents/text-to-image`,
+  TEXT_TO_IMAGE:       `${BASE_URL}/api/images/generate`,
+  IMAGE_HISTORY:       `${BASE_URL}/api/images/history`,
   TEXT_TO_TABLE:       `${BASE_URL}/api/agents/text-to-table`,
 
   // ── Calculator ────────────────────────────────────────────────────────────
