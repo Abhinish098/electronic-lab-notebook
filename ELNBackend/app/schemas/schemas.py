@@ -75,6 +75,7 @@ class ImageGenerationRequest(BaseModel):
     prompt: str
     width: Optional[int] = 512
     height: Optional[int] = 512
+    seed:   Optional[int] = None
 
 
 class ImageGenerationOut(BaseModel):

@@ -8,6 +8,7 @@
  */
 
 // ── Notebook Agents ─────────────────────────────────────────────────────────
+import { ENDPOINTS } from '@/api/endpoints';
 
 const AUTOCOMPLETE_POOL = [
   ' — showing statistically significant results (p < 0.001) under controlled conditions.',
@@ -35,12 +36,32 @@ export const mockAutocomplete = async (text) => {
  * @returns {Promise<string>} - URL of generated image
  */
 export const mockTextToImage = async (prompt) => {
-  await delay(1400);
-  const seeds = [42, 137, 256, 512, 1024, 888, 333];
-  const seed   = seeds[Math.floor(Math.random() * seeds.length)];
-  return `https://picsum.photos/seed/${seed + prompt.length * 3}/400/300`;
+  const res = await fetch(ENDPOINTS.TEXT_TO_IMAGE, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ prompt, width: 512, height: 512 }),
+  });
+  if (!res.ok) throw new Error(`Image generation failed: ${res.status}`);
+  const data = await res.json();
+  console.log('API response:', data);          // ← add this
+  console.log('image_b64 type:', typeof data.image_b64);  // ← and this
+  return { b64: data.image_b64, id: data.id, modelUsed: data.model_used };
 };
 
+export const fetchImageHistory = async () => {
+  const res = await fetch(ENDPOINTS.IMAGE_HISTORY);
+  if (!res.ok) throw new Error(`Failed to fetch history: ${res.status}`);
+  const data = await res.json();
+  // Map DB rows to the same shape the generate() flow produces
+  return data.map(item => ({
+    url:       item.image_b64,
+    dbId:      item.id,
+    modelUsed: item.model_used,
+    prompt:    item.prompt,
+    id:        item.id,
+    ts:        new Date(item.created_at).toLocaleTimeString(),
+  }));
+};
 /**
  * mockTextToTable
  * Parses CSV / TSV / semicolon-delimited text where the FIRST row is always
