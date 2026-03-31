@@ -27,16 +27,12 @@ const TextToImageAgent = () => {
     if (!prompt.trim()) return;
     setLoading(true);
     try {
-      const result = await mockTextToImage(prompt);
-      console.log('result from mockTextToImage:', result);  // ← add this
-      console.log('result.b64 type:', typeof result.b64);   // ← and this
+      const imageB64 = await mockTextToImage(prompt);
       const entry = {
-        url:       result.b64,        // ← extract b64 string, not the whole object
-        dbId:      result.id,
-        modelUsed: result.modelUsed,
+        url: imageB64,           // string directly, no destructuring
+        id:  Date.now(),         // unique React key
         prompt,
-        id:        Date.now(),
-        ts:        new Date().toLocaleTimeString(),
+        ts:  new Date().toLocaleTimeString(),
       };
       setImages(prev => [entry, ...prev]);
       setPrompt('');

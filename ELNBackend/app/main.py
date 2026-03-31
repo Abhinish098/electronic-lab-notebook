@@ -18,7 +18,8 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://Abhinish098.github.io",
+    "https://abhinish098.github.io",        # ← must be exact, no trailing slash
+    "https://abhinish098.github.io/electronic-lab-notebook",  # ← add subfolder too
 ]
 
 app.add_middleware(
@@ -27,6 +28,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    max_age=600,
 )
 
 

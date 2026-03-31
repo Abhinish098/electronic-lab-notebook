@@ -39,13 +39,16 @@ export const mockTextToImage = async (prompt) => {
   const res = await fetch(ENDPOINTS.TEXT_TO_IMAGE, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ prompt, width: 512, height: 512 }),
+    body:    JSON.stringify({ 
+      prompt: prompt, 
+      width: 512, 
+      height: 512, 
+      seed: Math.floor(Math.random() * 2147483647),  // random seed every call
+    }),
   });
   if (!res.ok) throw new Error(`Image generation failed: ${res.status}`);
   const data = await res.json();
-  console.log('API response:', data);          // ← add this
-  console.log('image_b64 type:', typeof data.image_b64);  // ← and this
-  return { b64: data.image_b64, id: data.id, modelUsed: data.model_used };
+  return data.image_b64;
 };
 
 export const fetchImageHistory = async () => {
