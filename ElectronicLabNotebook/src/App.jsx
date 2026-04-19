@@ -18,6 +18,7 @@ import { WINDOW_REGISTRY }     from '@/configs/windowRegistry';
 import WindowFrame             from '@/components/WindowFrame';
 import Desktop                 from '@/layout/Desktop';
 import Taskbar                 from '@/layout/Taskbar';
+import { Suspense }            from 'react';
 
 /* ── Inner shell (consumes context) ────────────────────────────────────────── */
 const Shell = () => {
@@ -51,7 +52,13 @@ const Shell = () => {
             onMinimize={()  => minimizeWindow(id)}
             onFocus={()    => focusWindow(id)}
           >
-            <Module />
+            <Suspense fallback={
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#5050a0', fontSize:13 }}>
+                <span className="eln-pulse">⚙️</span>&nbsp;Loading…
+              </div>
+            }>
+              <Module />
+            </Suspense>
           </WindowFrame>
         );
       })}

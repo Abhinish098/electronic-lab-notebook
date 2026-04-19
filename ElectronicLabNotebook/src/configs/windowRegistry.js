@@ -12,9 +12,11 @@
  *   taskbar     — whether the app appears in the taskbar
  */
 
-import NotebookApp    from '@/modules/notebook/NotebookApp';
-import CalculatorApp  from '@/modules/calculator/CalculatorApp';
-import DashboardApp   from '@/modules/dashboard/DashboardApp';
+import { lazy } from 'react';
+
+const NotebookApp   = lazy(() => import('@/modules/notebook/NotebookApp'));
+const CalculatorApp = lazy(() => import('@/modules/calculator/CalculatorApp'));
+const DashboardApp  = lazy(() => import('@/modules/dashboard/DashboardApp'));
 
 export const WINDOW_REGISTRY = {
   notebook: {
