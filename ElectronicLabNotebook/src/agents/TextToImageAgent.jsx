@@ -27,14 +27,9 @@ const TextToImageAgent = () => {
     if (!prompt.trim()) return;
     setLoading(true);
     try {
-      const imageB64 = await mockTextToImage(prompt);
-      const entry = {
-        url: imageB64,           // string directly, no destructuring
-        id:  Date.now(),         // unique React key
-        prompt,
-        ts:  new Date().toLocaleTimeString(),
-      };
-      setImages(prev => [entry, ...prev]);
+      await mockTextToImage(prompt);
+      const history = await fetchImageHistory();
+      setImages(history);
       setPrompt('');
     } catch (err) {
       console.error('Image generation error:', err);
@@ -42,7 +37,7 @@ const TextToImageAgent = () => {
       setLoading(false);
     }
   };
-
+  
   return (
     <div style={{ padding: 20, height: '100%', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
       <SectionHeader

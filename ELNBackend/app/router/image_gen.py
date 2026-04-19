@@ -1,6 +1,7 @@
 import os
 import base64
 import random
+import urllib.parse
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -11,10 +12,8 @@ from app.db.database import get_db
 
 router = APIRouter()
 
-HF_API_KEY = os.getenv("HF_API_KEY", "")
-HF_MODEL   = "stabilityai/stable-diffusion-xl-base-1.0"
-HF_API_URL = f"https://router.huggingface.co/hf-inference/models/{HF_MODEL}"
-
+MODEL = os.getenv("MODEL", "pollinations/flux")
+POLLINATIONS_BASE = os.getenv("POLLINATIONS_BASE", "https://api.pollinations.ai/generate?prompt={prompt}&w={w}&h={h}&seed={seed}&model=" + MODEL)
 SCIENCE_PREFIX = (
     "Scientific illustration, high detail, medical visualization, "
     "clean white background, labeled diagram: "
@@ -22,39 +21,24 @@ SCIENCE_PREFIX = (
 
 
 async def _generate(prompt: str, width: int, height: int, seed: int) -> bytes:
-    if not HF_API_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail="HF_API_KEY not set. Add HF_API_KEY=hf_xxxx to your .env file.",
-        )
-
-    headers = {
-        "Authorization": f"Bearer {HF_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "inputs": SCIENCE_PREFIX + prompt,
-        "parameters": {
-            "width":               min(width, 1024),
-            "height":              min(height, 1024),
-            "num_inference_steps": 30,
-            "guidance_scale":      7.5,
-            "seed":                seed,
-        },
-    }
+    full_prompt  = SCIENCE_PREFIX + prompt
+    encoded      = urllib.parse.quote(full_prompt)
+    if POLLINATIONS_BASE is None:
+        raise HTTPException(status_code=500, detail="POLLINATIONS_BASE environment variable not set")
+    url          = POLLINATIONS_BASE.format(
+        prompt=encoded,
+        w=min(width, 512),
+        h=min(height, 512),
+        seed=seed,
+    )
 
     async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(HF_API_URL, headers=headers, json=payload)
+        response = await client.get(url, follow_redirects=True)
 
-    if response.status_code == 503:
-        raise HTTPException(
-            status_code=503,
-            detail="Model is loading on HF servers (~20s). Please retry.",
-        )
     if response.status_code != 200:
         raise HTTPException(
             status_code=response.status_code,
-            detail=f"HF API error: {response.text[:300]}",
+            detail=f"Pollinations error: {response.text[:200]}",
         )
 
     return response.content
@@ -64,28 +48,27 @@ async def _generate(prompt: str, width: int, height: int, seed: int) -> bytes:
     "/generate",
     response_model=schemas.ImageGenerationOut,
     status_code=201,
-    summary="Generate a medical/scientific image from a text prompt",
+    summary="Generate a medical/scientific image (Pollinations FLUX — free, no key)",
 )
 async def generate_image(
     payload: schemas.ImageGenerationRequest,
     db: Session = Depends(get_db),
 ):
-    # Use seed from request if provided, otherwise generate one server-side
     seed = payload.seed if payload.seed is not None else random.randint(0, 2**31 - 1)
 
     image_bytes = await _generate(
         payload.prompt,
-        payload.width or 512,
-        payload.height or 512,
+        payload.width or 1024,
+        payload.height or 1024,
         seed,
     )
 
-    b64 = "data:image/png;base64," + base64.b64encode(image_bytes).decode("utf-8")
+    b64 = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode("utf-8")
 
     record = models.GeneratedImage(
         prompt=payload.prompt,
         image_b64=b64,
-        model_used=HF_MODEL,
+        model_used=MODEL,
     )
     db.add(record)
     db.commit()
