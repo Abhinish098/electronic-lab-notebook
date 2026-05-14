@@ -5,7 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/electronic-lab-notebook/eln-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Electronic Lab Notebook</title>
-    <script type="module" crossorigin src="/electronic-lab-notebook/assets/index-BSxSzY19.js"></script>
+
+    <!-- RDKit WASM — required by all ChemInfo operations (2D render, descriptors, similarity, substructure) -->
+    <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+    <script>
+      window.initRDKitModule().then(function (instance) {
+        window.RDKit = instance;
+        console.log('[index.html] RDKit loaded ✓', window.RDKit.version());
+      }).catch(function (err) {
+        console.error('[index.html] RDKit failed to load:', err);
+      });
+    </script>
+
+    <!-- 3Dmol.js — required by Op_Viewer3D (3D Conformation) -->
+    <script src="https://3dmol.org/build/3Dmol-min.js"></script>
+    <script type="module" crossorigin src="/electronic-lab-notebook/assets/index-Q6DsFUiB.js"></script>
     <link rel="stylesheet" crossorigin href="/electronic-lab-notebook/assets/index-Bma6lu4J.css">
   </head>
   <body>
