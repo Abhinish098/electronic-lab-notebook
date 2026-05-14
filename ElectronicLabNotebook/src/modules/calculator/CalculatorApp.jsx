@@ -6,14 +6,16 @@
  */
 
 import { useState } from 'react';
-import ProteinAnalyzer from './ProteinAnalyzer';
-import MolWeightCalc   from './MolWeightCalc';
-import DilutionCalc    from './DilutionCalc';
+import ProteinAnalyzer  from './ProteinAnalyzer';
+import MolWeightCalc    from './MolWeightCalc';
+import DilutionCalc     from './DilutionCalc';
+import ChemInformatics  from './ChemInformatics';
 
 const TOOLS = [
-  { id: 'protein',   label: 'Protein Analyser', icon: '🧬', component: ProteinAnalyzer },
-  { id: 'molweight', label: 'Mol. Weight',       icon: '⚖️', component: MolWeightCalc   },
-  { id: 'dilution',  label: 'Dilution Calc',     icon: '💧', component: DilutionCalc    },
+  { id: 'protein',      label: 'Protein Analyser',  icon: '🧬', component: ProteinAnalyzer  },
+  { id: 'molweight',   label: 'Mol. Weight',        icon: '⚖️', component: MolWeightCalc    },
+  { id: 'dilution',    label: 'Dilution Calc',      icon: '💧', component: DilutionCalc     },
+  { id: 'cheminf',     label: 'Chem Informatics',   icon: '🧪', component: ChemInformatics  },
 ];
 
 const CalculatorApp = () => {
@@ -60,7 +62,7 @@ const CalculatorApp = () => {
         <div style={{ marginTop: 'auto', padding: '10px 8px' }}>
           <div style={{ fontSize: 10, color: '#303050', lineHeight: 1.6 }}>
             🔬 Bio Calculator Suite<br />
-            <span style={{ color: '#282845' }}>v1.0 · FastAPI ready</span>
+            <span style={{ color: '#282845' }}>v1.1 · 4 tools</span>
           </div>
         </div>
       </div>
