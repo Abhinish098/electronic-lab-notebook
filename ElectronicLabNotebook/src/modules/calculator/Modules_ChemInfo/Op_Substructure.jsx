@@ -9,7 +9,7 @@ import SubstructureCall from './SubstructureCall';
 import { cardLabelStyle } from './opStyles';
 
 const Op_Substructure = ({ molecules, query }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+  <div style={{ display: '-webkit-inline-box', flexDirection: 'column', gap: 14 }}>
     {molecules.map((m, i) => (
       <div key={i}>
         <div style={cardLabelStyle}>{m.label || `Molecule ${i + 1}`}</div>

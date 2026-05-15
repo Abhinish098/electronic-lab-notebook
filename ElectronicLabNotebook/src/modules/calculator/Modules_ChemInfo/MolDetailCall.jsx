@@ -10,7 +10,7 @@ const MolDetailCall = ({ smiles }) => {
     const mol = window.RDKit.get_mol(smiles);
     if (mol) {
       const desc = JSON.parse(mol.get_descriptors());
-      
+
       setData({
         svg: mol.get_svg(),
         details: {
@@ -28,12 +28,12 @@ const MolDetailCall = ({ smiles }) => {
   if (!data.details) return <p>Invalid SMILES</p>;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
-      {/* Visual Render */}
-      <div dangerouslySetInnerHTML={{ __html: data.svg }} style={{ width: '200px' }} />
-      
-      {/* Property List */}
-      <div style={{ borderLeft: '1px solid #eee', paddingLeft: '20px' }}>
+    <div style={{ display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: 16, border: '1px solid #ccc', padding: 15, borderRadius: 8 }}>
+      {/* Left — molecule image, 50% width */}
+      <div dangerouslySetInnerHTML={{ __html: data.svg }} style={{ width: '100%', overflow: 'hidden' }} />
+
+      {/* Right — property list, 50% width */}
+      <div style={{ borderLeft: '1px solid #eee', paddingLeft: 16 }}>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           <li><strong>LogP:</strong> {data.details.logP}</li>
           <li><strong>TPSA:</strong> {data.details.tpsa}</li>
